@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 
 import pandas as pd
 
+from .db import PRE_CONSUMER_STAGES
+
 MIN_ENTRIES = 5       # minimum log rows behind any recommendation
 MIN_DAYS = 3          # minimum distinct days
 PLATE_SHARE = 40.0    # % of total kg
@@ -14,6 +16,11 @@ UNKNOWN_SHARE = 25.0
 ITEM_SHARE = 25.0
 MEAL_SHARE = 40.0
 MEASURED_MIN = 50.0
+OVERPROD_SHARE = 20.0     # % of surplus-stage kg from one meal+item
+OVERPROD_MIN_DAYS = 8
+DISLIKE_RATIO = 2.5       # item plate-waste g/meal vs median item
+DISLIKE_MIN_DAYS = 6
+SPOILAGE_MIN_ENTRIES = 3
 
 
 @dataclass
@@ -35,7 +42,7 @@ def _ev(df: pd.DataFrame, **extra) -> dict:
             "provenance mix": df["provenance"].value_counts().to_dict()}
 
 
-def generate(logs: pd.DataFrame) -> tuple[list[Recommendation], str | None]:
+def generate(logs: pd.DataFrame, counts: pd.DataFrame | None = None) -> tuple[list[Recommendation], str | None]:
     """Return (recommendations, message-if-none)."""
     if len(logs) < MIN_ENTRIES or logs["log_date"].nunique() < MIN_DAYS:
         return [], (f"Not enough data: need at least {MIN_ENTRIES} entries over "
@@ -57,7 +64,7 @@ def generate(logs: pd.DataFrame) -> tuple[list[Recommendation], str | None]:
             "it as an intervention.", plate,
             **{"plate-waste share of kg": f"{s:.0f}% (threshold {PLATE_SHARE:.0f}%)"})
 
-    pre = logs[logs["stage"].isin(["Preparation", "Serving/Buffet", "Storage"])]
+    pre = logs[logs["stage"].isin(PRE_CONSUMER_STAGES)]
     s = pre["kg"].sum() / total * 100
     if s >= PRECONSUMER_SHARE:
         add("R2-PRODUCTION", "Pre-consumer waste is high",
@@ -94,6 +101,52 @@ def generate(logs: pd.DataFrame) -> tuple[list[Recommendation], str | None]:
                 f"Focus the first pilot on {m} service.", logs[logs["meal"] == m],
                 **{"meal share of kg": f"{kg / total * 100:.0f}% (threshold {MEAL_SHARE:.0f}%)",
                    "caveat": "raw kg, not normalised by meals served"})
+
+    # R8: recurring overproduction of one meal+item (surplus stage)
+    sur = logs[logs["stage"] == "Surplus/Overproduction"]
+    if len(sur) and sur["kg"].sum() > 0:
+        g = sur.groupby(["meal", "item"]).agg(kg=("kg", "sum"), days=("log_date", "nunique"))
+        gm, gi = g["kg"].idxmax()
+        row = g.loc[(gm, gi)]
+        share = row["kg"] / sur["kg"].sum() * 100
+        if share >= OVERPROD_SHARE and row["days"] >= OVERPROD_MIN_DAYS:
+            add("R8-OVERPROD", f"Recurring overproduction: {gi} at {gm}",
+                f"Cook {gi} for {gm} in smaller batches or use meals-served forecasts "
+                "to set quantities; track it as an intervention.",
+                sur[(sur["meal"] == gm) & (sur["item"] == gi)],
+                **{"share of surplus kg": f"{share:.0f}% (threshold {OVERPROD_SHARE:.0f}%)",
+                   "days with surplus": int(row["days"]),
+                   "avg kg per day": round(float(row["kg"] / row["days"]), 1)})
+
+    # R9: item whose plate waste per meal served is far above the typical item
+    plate_all = logs[logs["stage"] == "Plate waste"]
+    if counts is not None and len(counts) and len(plate_all):
+        keys = ["log_date", "session_label", "meal"]
+        pw = plate_all.groupby(keys + ["item"], as_index=False)["kg"].sum().merge(
+            counts[keys + ["meals_served"]], on=keys, how="inner")
+        pw["g_per_meal"] = pw["kg"] / pw["meals_served"] * 1000
+        stats = pw.groupby("item").agg(g=("g_per_meal", "mean"), days=("log_date", "nunique"))
+        stats = stats[stats["days"] >= DISLIKE_MIN_DAYS]
+        if len(stats) >= 4:
+            med = float(stats["g"].median())
+            top = stats["g"].idxmax()
+            if med > 0 and stats.loc[top, "g"] / med >= DISLIKE_RATIO:
+                add("R9-DISLIKED", f"'{top}' has unusually high plate waste",
+                    f"Check taste, recipe and portion size of '{top}' (e.g. a quick resident "
+                    "feedback round) or rotate it on the menu.",
+                    plate_all[plate_all["item"] == top],
+                    **{"plate waste g per meal served": f"{stats.loc[top, 'g']:.0f} "
+                       f"vs median item {med:.0f} (threshold {DISLIKE_RATIO}x)",
+                       "days with matched counts": int(stats.loc[top, "days"])})
+
+    # R10: spoilage events
+    sp = logs[logs["stage"] == "Spoilage"]
+    if len(sp) >= SPOILAGE_MIN_ENTRIES and sp["log_date"].nunique() >= 2:
+        top_items = sp.groupby("item")["kg"].sum().sort_values(ascending=False).head(3)
+        add("R10-SPOILAGE", "Recurring spoilage events",
+            "Review storage temperature, first-in-first-out stock rotation and purchase "
+            "quantities for the top spoiled items.", sp,
+            **{"top spoiled items (kg)": {k: round(float(v), 1) for k, v in top_items.items()}})
 
     meas = (logs["provenance"] == "measured").mean() * 100
     if meas < MEASURED_MIN:

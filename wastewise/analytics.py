@@ -94,3 +94,14 @@ def evaluate_intervention(logs, counts, iv) -> dict:
     return {"baseline": base, "followup": follow, "change_pct": change,
             "sufficient": base["days_logged"] >= 3 and follow["days_logged"] >= 3
             and change is not None}
+
+
+def estimate_cost(logs: pd.DataFrame, costs: pd.DataFrame) -> dict:
+    """Waste value in INR using assumed per-kg prices; unpriced items are reported, not guessed."""
+    if logs.empty or costs.empty:
+        return {"inr": None, "kg_priced": 0.0, "kg_unpriced": float(logs["kg"].sum())}
+    m = logs.merge(costs[["item", "inr_per_kg"]], on="item", how="left")
+    priced = m[m["inr_per_kg"].notna()]
+    return {"inr": float((priced["kg"] * priced["inr_per_kg"]).sum()),
+            "kg_priced": float(priced["kg"].sum()),
+            "kg_unpriced": float(m[m["inr_per_kg"].isna()]["kg"].sum())}

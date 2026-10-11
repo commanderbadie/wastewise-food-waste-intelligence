@@ -20,6 +20,7 @@ st.warning(
 
 logs = db.load_logs(CONN)
 counts = db.load_counts(CONN)
+costs = db.load_item_costs(CONN)
 n_synth = int((logs["provenance"] == "synthetic").sum()) if not logs.empty else 0
 if n_synth:
     st.error(f"🧪 SYNTHETIC DATA PRESENT: {n_synth} log rows are synthetic demo data, not real measurements.")
@@ -52,6 +53,13 @@ with tab_dash:
             m[2].metric("Meals served (matched)", f"{r['meals_served']:,}")
             m[3].metric("kg per meal", f"{r['kg_per_meal']:.3f}" if r["kg_per_meal"] is not None
                         else "n/a – no meals-served denominator")
+            cost = analytics.estimate_cost(f, costs)
+            if cost["inr"] is not None:
+                st.metric("Estimated value of waste (INR, assumed prices)", f"{cost['inr']:,.0f}")
+                note = (f"; {cost['kg_unpriced']:.1f} kg has no price and is excluded"
+                        if cost["kg_unpriced"] > 0.0005 else "")
+                st.caption("INR uses assumed per-kg prices from the synthetic demo item list"
+                           + note + ".")
             if r["kg_unmatched"] > 0.0005:
                 st.caption(f"{r['kg_unmatched']:.1f} kg has no matching meals-served count and is "
                            "excluded from kg/meal.")
@@ -114,7 +122,7 @@ with tab_rec:
     st.subheader("Rule-based recommendations")
     st.caption("Each recommendation lists the rule, thresholds and the data behind it. "
                "They are suggestions for pilots, not proven causes.")
-    recs, msg = (recommendations.generate(logs) if not logs.empty
+    recs, msg = (recommendations.generate(logs, counts) if not logs.empty
                  else ([], "No data logged yet."))
     if msg:
         st.info(msg)
@@ -175,11 +183,11 @@ with tab_data:
     c[1].download_button("Download meals served (CSV)", counts.to_csv(index=False).encode(),
                          "wastewise_meal_counts.csv", "text/csv")
     st.subheader("Synthetic demo data")
-    st.caption("Generates 28 days of clearly labelled synthetic rows (provenance = synthetic).")
+    st.caption("Generates a deterministic 8-week synthetic dataset for an invented hostel mess and college canteen (about 4,000 rows). Every row is flagged synthetic; it is not real, measured or validated data. Item prices are assumptions.")
     c = st.columns(2)
     if c[0].button("Load / reload synthetic demo data"):
         info = seed.seed_demo(CONN)
-        st.success(f"Seeded {info['waste_rows']} synthetic rows."); st.rerun()
+        st.success(f"Seeded {info['waste_rows']} synthetic waste rows and {info['count_rows']} meals-served counts."); st.rerun()
     if c[1].button("Remove all synthetic data"):
         db.clear_synthetic(CONN); st.rerun()
     st.dataframe(logs, hide_index=True)

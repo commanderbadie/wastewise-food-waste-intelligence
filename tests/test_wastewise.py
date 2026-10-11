@@ -77,22 +77,22 @@ def test_recommendations_evidence(conn):
 
 
 def test_synthetic_flagged(conn):
-    seed.seed_demo(conn, days=14, end=date(2025, 3, 1))
+    seed.seed_demo(conn, weeks=4)
     recs, _ = recommendations.generate(db.load_logs(conn))
     assert recs and all(r.synthetic_basis for r in recs)
 
 
 def test_seed_idempotent_and_labelled(conn):
-    seed.seed_demo(conn, days=14, end=date(2025, 3, 1))
+    seed.seed_demo(conn, weeks=4)
     n1 = len(db.load_logs(conn))
-    seed.seed_demo(conn, days=14, end=date(2025, 3, 1))
+    seed.seed_demo(conn, weeks=4)
     logs = db.load_logs(conn)
     assert len(logs) == n1 and set(logs["provenance"]) == {"synthetic"}
     assert len(db.load_interventions(conn)) == 1
 
 
 def test_intervention_eval(conn):
-    seed.seed_demo(conn, days=28, end=date(2025, 3, 1))
+    seed.seed_demo(conn)
     iv = db.load_interventions(conn).iloc[0]
     res = analytics.evaluate_intervention(db.load_logs(conn), db.load_counts(conn), iv)
     assert res["sufficient"] and res["change_pct"] < 0
