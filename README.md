@@ -103,12 +103,12 @@ Verified against the live URL on 2026-10-11 with an automated Playwright (Chromi
 
 - [x] App URL loads publicly without login
 - [x] Storage warning and synthetic-data banner visible
-- [x] Load synthetic demo data ? dashboard, filters (Meal = Lunch) and kg/meal render
-- [x] Log a waste entry ? appears in the CSV export (note: the "Saved" confirmation message itself was not asserted, and the dashboard refresh was not re-checked)
+- [x] Load synthetic demo data → dashboard, filters (Meal = Lunch) and kg/meal render
+- [x] Log a waste entry → appears in the CSV export (note: the "Saved" confirmation message itself was not asserted, and the dashboard refresh was not re-checked)
 - [ ] kg/meal shows "n/a" for data lacking a denominator (covered by unit tests; not checked live)
 - [x] Recommendations show evidence and the synthetic-data warning
 - [ ] Insufficient-data message (covered by unit tests; not checked live)
-- [x] Create an intervention ? listed; seeded synthetic intervention shows baseline/follow-up comparison
+- [x] Create an intervention → listed; seeded synthetic intervention shows baseline/follow-up comparison
 - [x] CSV download works and contains the provenance column (971 rows = 970 synthetic + 1 test entry)
 - [x] README updated with the real URL and verification date
 
