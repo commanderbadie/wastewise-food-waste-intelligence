@@ -174,3 +174,20 @@ Not verified: the meals-served form, persistence across restart/redeploy (expect
 - Add Record rejects weights <= 0 or > 500 kg, future dates and exact duplicates (same date/session/meal/item/stage/category/kg) with a message.
 - Intervention cards show kg per meal served before vs after, days covered, meals-served coverage (services with a denominator) and a caveat that before/after does not prove causation. The synthetic demo result stays labelled synthetic.
 - Recommendation cards show a "Suggested action" and an "Evidence" line (rule id, thresholds, numbers).
+
+## Live screenshots (user-captured, 2026-10-11)
+
+Captured by the project owner from the deployed app (commit 727fe05) showing auto-seeded SYNTHETIC demo data.
+
+![dashboard-kpis](docs/screenshots/dashboard-kpis.png)
+
+![dashboard-tables](docs/screenshots/dashboard-tables.png)
+
+![log-waste](docs/screenshots/log-waste.png)
+
+![recommendations](docs/screenshots/recommendations.png)
+
+![interventions](docs/screenshots/interventions.png)
+
+![export](docs/screenshots/export.png)
+

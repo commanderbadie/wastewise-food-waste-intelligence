@@ -29,3 +29,7 @@ python -m pytest -q in the project venv: **29 passed, 0 failed** (after the vali
 ## Limitations
 SQLite on Streamlit Community Cloud is ephemeral (reset on restart/redeploy, then re-seeded with synthetic data); no ML; no auth; single-file DB. The synthetic intervention result (about -38% dinner-rice kg/meal) is a demo outcome built into the generator, not a finding.
 
+
+
+**Live verification by the project owner, 2026-10-11 (screenshots in docs/screenshots/: dashboard-kpis, dashboard-tables, log-waste, recommendations, interventions, export), commit 727fe05:** the app loads with auto-seeded synthetic data; dashboard KPIs and tables/daily chart; Log waste form; recommendations with suggested action and evidence; intervention impact with coverage and caveat; Data & export tab. NOT shown/verified live: submitting an add-record entry, CSV download.
+
