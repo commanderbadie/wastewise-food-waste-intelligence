@@ -11,6 +11,12 @@ st.set_page_config(page_title="WasteWise", page_icon="🍽️", layout="wide")
 CONN = db.connect()
 db.init_db(CONN)
 
+# Fresh/empty database (e.g. after a Streamlit Cloud restart): seed the deterministic demo once.
+# Skipped if the user explicitly removed the synthetic data in this session.
+if (not st.session_state.get("synthetic_removed")
+        and seed.seed_if_empty(CONN)):
+    st.session_state["auto_seeded"] = True
+
 st.title("🍽️ WasteWise – Canteen Food-Waste Tracker")
 st.caption("Supports SDG 12.3 (halve per-capita food waste). Prototype; rule-based, no machine learning.")
 st.warning(
@@ -23,7 +29,8 @@ counts = db.load_counts(CONN)
 costs = db.load_item_costs(CONN)
 n_synth = int((logs["provenance"] == "synthetic").sum()) if not logs.empty else 0
 if n_synth:
-    st.error(f"🧪 SYNTHETIC DATA PRESENT: {n_synth} log rows are synthetic demo data, not real measurements.")
+    st.error(f"🧪 SYNTHETIC DEMO DATA: {n_synth} log rows are synthetic demo data, not real measurements. "
+             "The demo set is loaded automatically when the database is empty.")
 
 tab_dash, tab_log, tab_rec, tab_iv, tab_data = st.tabs(
     ["Dashboard", "Log waste", "Recommendations", "Interventions", "Data & export"])
@@ -31,7 +38,8 @@ tab_dash, tab_log, tab_rec, tab_iv, tab_data = st.tabs(
 # ---------- Dashboard ----------
 with tab_dash:
     if logs.empty:
-        st.info("No data yet. Log waste, or load synthetic demo data in the 'Data & export' tab.")
+        st.info("No data. The synthetic demo set loads automatically on a fresh start; you removed it, "
+                "so log waste or use 'Load / reload synthetic demo data' in the 'Data & export' tab.")
     else:
         c = st.columns(5)
         dmin, dmax = pd.to_datetime(logs["log_date"]).min().date(), pd.to_datetime(logs["log_date"]).max().date()
@@ -189,5 +197,5 @@ with tab_data:
         info = seed.seed_demo(CONN)
         st.success(f"Seeded {info['waste_rows']} synthetic waste rows and {info['count_rows']} meals-served counts."); st.rerun()
     if c[1].button("Remove all synthetic data"):
-        db.clear_synthetic(CONN); st.rerun()
+        db.clear_synthetic(CONN); st.session_state["synthetic_removed"] = True; st.rerun()
     st.dataframe(logs, hide_index=True)

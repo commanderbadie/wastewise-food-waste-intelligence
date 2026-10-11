@@ -16,3 +16,13 @@ def seed_demo(conn, *, start: date = DEMO_START, weeks: int = 8,
                              ds["interventions"])
     return {"waste_rows": len(ds["waste_logs"]), "count_rows": len(ds["meal_counts"]),
             "days": weeks * 7}
+
+
+def seed_if_empty(conn) -> bool:
+    """Seed the demo dataset only when the database holds no logs, counts or interventions."""
+    n = sum(conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+            for t in ("waste_logs", "meal_counts", "interventions"))
+    if n:
+        return False
+    seed_demo(conn)
+    return True

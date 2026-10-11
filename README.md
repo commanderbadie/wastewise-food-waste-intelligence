@@ -67,7 +67,7 @@ pytest -q
 streamlit run app.py
 ```
 
-Open the **Data & export** tab and click *Load / reload synthetic demo data* to explore.
+On a fresh start with an empty database the app **auto-seeds the deterministic synthetic demo dataset once** (it never seeds a database that already has rows, so no duplicates on reruns or new sessions). A persistent red "SYNTHETIC DEMO DATA" banner is shown while synthetic rows exist. The *Load / reload synthetic demo data* button in **Data & export** stays available; if you remove the synthetic data, it is not re-seeded in that session.
 
 ## Synthetic demo dataset
 
@@ -129,6 +129,8 @@ Deployment must be done by the repository owner, who must authorise Streamlit wi
 **Live URL:** https://wastewise-food-waste-intelligence-qeykaa8immms9xxex9aoin.streamlit.app/ (deployed by the repo owner; branch `main`, file `app.py`).
 
 ### ⚠️ Persistence warning
+
+Because storage is ephemeral, every restart/redeploy yields an empty database that is then re-seeded with the synthetic demo data. This makes the demo usable, **not durable**: anything you log is lost on the next restart. Export CSVs.
 
 SQLite writes to the container filesystem. On Streamlit Community Cloud this is **not durable**:
 data can be lost when the app restarts, sleeps, or is redeployed. A cloud deployment is suitable
