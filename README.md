@@ -69,6 +69,12 @@ streamlit run app.py
 
 On a fresh start with an empty database the app **auto-seeds the deterministic synthetic demo dataset once** (it never seeds a database that already has rows, so no duplicates on reruns or new sessions). A persistent red "SYNTHETIC DEMO DATA" banner is shown while synthetic rows exist. The *Load / reload synthetic demo data* button in **Data & export** stays available; if you remove the synthetic data, it is not re-seeded in that session.
 
+## Project docs
+
+- [Project report](docs/PROJECT_REPORT.md), [demo walkthrough](docs/DEMO_WALKTHROUGH.md), [acceptance checklist](docs/ACCEPTANCE_CHECKLIST.md)
+- Repo: https://github.com/commanderbadie/wastewise-food-waste-intelligence | Live: https://wastewise-food-waste-intelligence-qeykaa8immms9xxex9aoin.streamlit.app/
+- Live verification: earlier build verified in a browser; the latest commits were not verified live as of 2026-10-11 (see checklist).
+
 ## Synthetic demo dataset
 
 > **All demo data is synthetic.** It is invented, not measured, not validated and not from any real institution. Every row carries `provenance='synthetic'` and `source_type='synthetic'`, and notes start with "SYNTHETIC".
