@@ -3,8 +3,10 @@
 A small, transparent Streamlit prototype for logging and analysing food waste in an
 institutional canteen (university, hospital, workplace), with local SQLite storage.
 
-> **Status:** working prototype. **No live deployment exists yet** – see
-> [Deployment](#deployment-streamlit-community-cloud). No live URL is claimed.
+> **Status:** working prototype, deployed on Streamlit Community Cloud (demo only; storage is not durable).
+>
+> - **Live app:** https://wastewise-food-waste-intelligence-qeykaa8immms9xxex9aoin.streamlit.app/
+> - **Repository:** https://github.com/commanderbadie/wastewise-food-waste-intelligence
 
 ## Context: SDG 12.3
 
@@ -69,7 +71,12 @@ Open the **Data & export** tab and click *Load / reload synthetic demo data* to 
 
 ## Screenshots
 
-Not yet captured. After running the app locally, add images under `docs/` and link them here.
+Captured from the live deployment on 2026-10-11 using synthetic demo data (not real measurements).
+
+| Dashboard | Filtered (Meal = Lunch) |
+|---|---|
+| ![Dashboard](docs/screenshots/01-dashboard.png) | ![Filtered](docs/screenshots/02-dashboard-filtered.png) |
+| ![Recommendations](docs/screenshots/03-recommendations.png) | ![Interventions](docs/screenshots/04-interventions.png) |
 
 ## Deployment (Streamlit Community Cloud)
 
@@ -81,8 +88,7 @@ Deployment must be done by the repository owner, who must authorise Streamlit wi
    main file `app.py` → Deploy.
 3. Record the real URL below once it exists.
 
-**Live URL:** _none – not deployed. `https://wastewise-food-waste-intelligence.streamlit.app`
-returned HTTP 404 when probed on 2026-10-11, so no app exists there._
+**Live URL:** https://wastewise-food-waste-intelligence-qeykaa8immms9xxex9aoin.streamlit.app/ (deployed by the repo owner; branch `main`, file `app.py`).
 
 ### ⚠️ Persistence warning
 
@@ -93,15 +99,20 @@ volume or external database for real data.
 
 ### Deployment acceptance checklist
 
-- [ ] App URL loads publicly without login (or access policy is intentionally documented)
-- [ ] Storage warning and synthetic-data banner visible
-- [ ] Load synthetic demo data → dashboard, filters and kg/meal render
-- [ ] Log a waste entry and a meals-served count → appear in dashboard
-- [ ] kg/meal shows "n/a" for data lacking a denominator
-- [ ] Recommendations show evidence; insufficient data shows a message
-- [ ] Create an intervention → baseline/follow-up comparison renders
-- [ ] CSV downloads open and contain provenance column
-- [ ] README updated with the real URL and the date of verification
+Verified against the live URL on 2026-10-11 with an automated Playwright (Chromium) run:
+
+- [x] App URL loads publicly without login
+- [x] Storage warning and synthetic-data banner visible
+- [x] Load synthetic demo data ? dashboard, filters (Meal = Lunch) and kg/meal render
+- [x] Log a waste entry ? appears in the CSV export (note: the "Saved" confirmation message itself was not asserted, and the dashboard refresh was not re-checked)
+- [ ] kg/meal shows "n/a" for data lacking a denominator (covered by unit tests; not checked live)
+- [x] Recommendations show evidence and the synthetic-data warning
+- [ ] Insufficient-data message (covered by unit tests; not checked live)
+- [x] Create an intervention ? listed; seeded synthetic intervention shows baseline/follow-up comparison
+- [x] CSV download works and contains the provenance column (971 rows = 970 synthetic + 1 test entry)
+- [x] README updated with the real URL and verification date
+
+Not verified: the meals-served form, persistence across restart/redeploy (expected to be lost), and which commit the live app was built from.
 
 ## Limitations
 
