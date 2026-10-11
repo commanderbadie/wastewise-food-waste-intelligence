@@ -8,13 +8,23 @@ from wastewise import analytics, db, recommendations, seed
 
 st.set_page_config(page_title="WasteWise", page_icon="🍽️", layout="wide")
 
+def _seed_if_empty(conn) -> bool:
+    """Seed the demo set only when no logs, counts or interventions exist (idempotent)."""
+    n = sum(conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+            for t in ("waste_logs", "meal_counts", "interventions"))
+    if n:
+        return False
+    seed.seed_demo(conn)
+    return True
+
+
 CONN = db.connect()
 db.init_db(CONN)
 
 # Fresh/empty database (e.g. after a Streamlit Cloud restart): seed the deterministic demo once.
 # Skipped if the user explicitly removed the synthetic data in this session.
 if (not st.session_state.get("synthetic_removed")
-        and seed.seed_if_empty(CONN)):
+        and _seed_if_empty(CONN)):
     st.session_state["auto_seeded"] = True
 
 st.title("🍽️ WasteWise – Canteen Food-Waste Tracker")

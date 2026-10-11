@@ -46,3 +46,18 @@ def test_no_autoseed_when_db_has_user_data(tmp_path, monkeypatch):
                      method="weighed (scale)", provenance="measured")
     AppTest.from_file(APP, default_timeout=60).run()
     assert len(db.load_logs(conn)) == 1
+
+
+def test_app_runs_with_stale_cached_seed_module(tmp_path, monkeypatch):
+    # Regression: after a hot redeploy a cached older `wastewise.seed` lacks newer helpers;
+    # app.py must rely only on seed.seed_demo.
+    import sys
+    import types
+
+    from wastewise import seed
+    monkeypatch.setattr(db, "DEFAULT_DB_PATH", str(tmp_path / "stale.db"))
+    monkeypatch.setitem(sys.modules, "wastewise.seed", types.SimpleNamespace(seed_demo=seed.seed_demo))
+    monkeypatch.setattr("wastewise.seed", types.SimpleNamespace(seed_demo=seed.seed_demo), raising=False)
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert not at.exception
+    assert len(db.load_logs(db.connect(str(tmp_path / "stale.db")))) > 3000
