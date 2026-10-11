@@ -131,3 +131,36 @@ def test_old_database_is_migrated(tmp_path):
     with db.session(path) as conn:
         seed.seed_demo(conn, weeks=2)
         assert len(db.load_logs(conn)) > 0
+
+
+def _entry(conn, **kw):
+    base = dict(log_date=date(2026, 9, 1), session_label="mine", meal="Lunch", item="Rice",
+                stage="Plate waste", category="unknown", kg=1.0, method="weighed (scale)",
+                provenance="measured")
+    base.update(kw)
+    return db.add_waste_log(conn, **base)
+
+
+def test_add_record_validation(tmp_path):
+    from datetime import timedelta
+    c = db.connect(str(tmp_path / "v.db")); db.init_db(c)
+    for bad in (0, -1, db.MAX_ENTRY_KG + 1):
+        with pytest.raises(ValueError, match="eight|implausible|greater"):
+            _entry(c, kg=bad)
+    with pytest.raises(ValueError, match="future"):
+        _entry(c, log_date=db.today() + timedelta(days=1))
+    _entry(c)
+    with pytest.raises(ValueError, match="Duplicate"):
+        _entry(c, item=" rice ")
+    _entry(c, kg=2.0)  # different weight is allowed
+    assert len(db.load_logs(c)) == 2
+
+
+def test_intervention_reports_coverage_and_days(seeded):
+    iv = db.load_interventions(seeded).iloc[0]
+    res = analytics.evaluate_intervention(db.load_logs(seeded), db.load_counts(seeded), iv)
+    for k in ("baseline", "followup"):
+        p = res[k]
+        assert p["days_logged"] >= 20 and p["kg_per_meal"] > 0
+        assert 0 < p["coverage_pct"] <= 100
+        assert p["services_with_meals_served"] <= p["services_logged"]

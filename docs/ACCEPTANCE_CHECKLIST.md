@@ -13,3 +13,5 @@
 | Live: no AttributeError after latest fix | **Not verified** | needs owner reboot and check |
 | Persistence across restart | Not durable (by design) | README warning |
 
+| Add-record validation (<=0, >500 kg, future date, duplicate) | Verified (local) | tests/test_demo_dataset.py, pytest 29 passed |
+| Intervention coverage/days/caveat, recommendation action+evidence cards | Verified (local tests/AppTest); not verified live | pytest 29 passed |

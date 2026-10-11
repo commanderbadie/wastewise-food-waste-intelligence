@@ -81,6 +81,13 @@ def evaluate_intervention(logs, counts, iv) -> dict:
             if iv["target_meal"] != "All":
                 c = c[c["meal"] == iv["target_meal"]]
         res = kg_per_meal(sub, c)
+        keys = ["log_date", "session_label", "meal"]
+        svc = sub[keys].drop_duplicates() if not sub.empty else None
+        n_svc = 0 if svc is None else len(svc)
+        n_cov = 0 if svc is None or c.empty else len(svc.merge(c[keys].drop_duplicates(), on=keys))
+        res["services_logged"] = n_svc
+        res["services_with_meals_served"] = n_cov
+        res["coverage_pct"] = round(n_cov / n_svc * 100, 1) if n_svc else None
         res["days_logged"] = int(sub["log_date"].nunique()) if not sub.empty else 0
         res["provenance_mix"] = (sub["provenance"].value_counts().to_dict()
                                  if not sub.empty else {})

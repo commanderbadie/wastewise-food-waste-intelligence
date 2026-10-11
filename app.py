@@ -107,7 +107,7 @@ with tab_log:
         stage = c[1].selectbox("Stage", db.STAGES)
         cat = c[2].selectbox("Category", db.CATEGORIES, index=2)
         c = st.columns(3)
-        kg = c[0].number_input("Waste (kg)", min_value=0.0, step=0.1, format="%.2f")
+        kg = c[0].number_input("Waste (kg)", min_value=0.0, max_value=db.MAX_ENTRY_KG, step=0.1, format="%.2f")
         method = c[1].selectbox("Measurement method", db.METHODS)
         prov = c[2].selectbox("Provenance", ["measured", "estimated"])
         notes = st.text_input("Notes (no personal data)")
@@ -146,8 +146,8 @@ with tab_rec:
         st.info(msg)
     for rec in recs:
         with st.expander(f"{rec.rule_id} – {rec.title}", expanded=True):
-            st.write(rec.action)
-            st.markdown(f"**Evidence:** {rec.evidence_text()}")
+            st.success(f"**Suggested action:** {rec.action}")
+            st.markdown(f"**Evidence** (rule `{rec.rule_id}`): {rec.evidence_text()}")
             if rec.synthetic_basis:
                 st.warning("Based partly on SYNTHETIC data.")
 
@@ -183,12 +183,17 @@ with tab_iv:
             p = res[key]
             col.metric(f"{label} kg/meal",
                        f"{p['kg_per_meal']:.3f}" if p["kg_per_meal"] is not None else "n/a")
-            col.caption(f"{p['days_logged']} days, {p['meals_served']:,} meals, {p['total_kg']:.1f} kg; "
+            cov = f"{p['coverage_pct']:.0f}%" if p["coverage_pct"] is not None else "n/a"
+            col.caption(f"{p['days_logged']} days covered, {p['meals_served']:,} meals, "
+                        f"{p['total_kg']:.1f} kg; meals-served coverage {cov} "
+                        f"({p['services_with_meals_served']}/{p['services_logged']} services); "
                         f"provenance {p['provenance_mix']}")
         cols[2].metric("Change", f"{res['change_pct']:+.1f}%" if res["change_pct"] is not None else "n/a")
         if not res["sufficient"]:
             st.info("Insufficient data (need >=3 logged days and a meals-served denominator in both periods).")
-        st.caption("Descriptive comparison only; other factors (menu, attendance, season) may explain the change.")
+        st.caption("kg per meal served = target kg / meals served in matched services only. "
+                   "A before/after difference does not prove the intervention caused it; menu, "
+                   "attendance, season and measurement changes may explain it.")
         if iv["is_synthetic"]:
             st.warning("SYNTHETIC intervention and data – illustration only.")
 

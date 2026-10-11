@@ -168,3 +168,9 @@ Not verified: the meals-served form, persistence across restart/redeploy (expect
 - Intervention comparison ignores confounders (menu, attendance, season); no significance tests.
 - No cost, carbon or water calculations. Synthetic data is illustrative only.
 - Do not enter personal data.
+
+## Validation and intervention reading (latest)
+
+- Add Record rejects weights <= 0 or > 500 kg, future dates and exact duplicates (same date/session/meal/item/stage/category/kg) with a message.
+- Intervention cards show kg per meal served before vs after, days covered, meals-served coverage (services with a denominator) and a caveat that before/after does not prove causation. The synthetic demo result stays labelled synthetic.
+- Recommendation cards show a "Suggested action" and an "Evidence" line (rule id, thresholds, numbers).

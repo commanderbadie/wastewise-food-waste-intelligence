@@ -92,6 +92,9 @@ def session(path: str | None = None):
         conn.close()
 
 
+MAX_ENTRY_KG = 500.0
+
+
 def add_waste_log(conn, *, log_date, session_label, meal, item, stage, category,
                   kg, method, provenance, notes="") -> int:
     if meal not in MEALS or stage not in STAGES:
@@ -100,10 +103,22 @@ def add_waste_log(conn, *, log_date, session_label, meal, item, stage, category,
         raise ValueError("invalid category")
     if provenance not in PROVENANCE:
         raise ValueError("invalid provenance")
-    if kg is None or float(kg) < 0:
-        raise ValueError("kg must be >= 0")
+    if kg is None or float(kg) <= 0:
+        raise ValueError("Weight must be greater than 0 kg.")
+    if float(kg) > MAX_ENTRY_KG:
+        raise ValueError(f"Weight {float(kg):g} kg is implausible for one entry (max {MAX_ENTRY_KG:g} kg).")
     if not str(item).strip():
         raise ValueError("item is required")
+    if str(log_date) > str(today()):
+        raise ValueError("Date is in the future; log waste on or after the day it happened.")
+    dup = conn.execute(
+        "SELECT 1 FROM waste_logs WHERE log_date=? AND session_label=? AND meal=? AND LOWER(item)=? "
+        "AND stage=? AND category=? AND ABS(kg-?)<0.0005 AND source_type='user'",
+        (str(log_date), session_label.strip() or "default", meal, item.strip().lower(), stage,
+         category, float(kg))).fetchone()
+    if dup:
+        raise ValueError("Duplicate: an identical entry (date, session, meal, item, stage, "
+                         "category, kg) already exists.")
     cur = conn.execute(
         "INSERT INTO waste_logs (log_date, session_label, meal, item, stage, category,"
         " kg, method, provenance, notes) VALUES (?,?,?,?,?,?,?,?,?,?)",

@@ -19,7 +19,7 @@ Logging forms, meals-served counts, filters, kg/meal with denominator, INR value
 All demo data is synthetic (provenance and source_type = 'synthetic', notes prefixed SYNTHETIC). No open per-meal Indian canteen/hostel dataset was found. Cited studies (Rezekne Latvia school study, Panjab University hostel questionnaire, WRI India report) are context only. See README for the data dictionary.
 
 ## Test results
-python -m pytest -q in the project venv: **27 passed, 0 failed** (commit 1387993, run 2026-10-11).
+python -m pytest -q in the project venv: **29 passed, 0 failed** (after the validation/intervention upgrade, run 2026-10-11).
 
 ## Live-test results (only what was verified)
 - Earlier build (commits up to a2d75bb), Playwright on the live URL: banners, seeding, dashboard, Meal filter, recommendations with evidence, interventions list and creation, test row appearing in the CSV export.
@@ -28,3 +28,4 @@ python -m pytest -q in the project venv: **27 passed, 0 failed** (commit 1387993
 
 ## Limitations
 SQLite on Streamlit Community Cloud is ephemeral (reset on restart/redeploy, then re-seeded with synthetic data); no ML; no auth; single-file DB. The synthetic intervention result (about -38% dinner-rice kg/meal) is a demo outcome built into the generator, not a finding.
+
