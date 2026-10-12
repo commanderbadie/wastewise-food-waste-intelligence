@@ -191,8 +191,3 @@ Captured by the project owner from the deployed app (commit 727fe05) showing aut
 
 ![export](docs/screenshots/export.png)
 
-
-## Seminar deck
-
-[docs/Team_No_15.pptx](docs/Team_No_15.pptx) (Team No 15): problem, 3 most relevant papers (Rezekne plate-waste study, Panjab University hostel study, WRI India report), idea, features, architecture, live screenshots, limitations. Rebuild with `python docs/build_ppt.py` (needs python-pptx).
-
